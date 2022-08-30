@@ -1,0 +1,258 @@
+zabbix_export:
+  version: '5.4'
+  date: '2022-08-30T13:33:33Z'
+  groups:
+    -
+      uuid: 1e7b21c9c3324a549980ed94e74150ef
+      name: Template/Fides
+  templates:
+    -
+      uuid: 571d9b12495e4d99bc7a5a50d6c16c68
+      template: 'Template SNMP Meraki - v1  - Fides'
+      name: 'Template SNMP Meraki - v1  - Fides'
+      groups:
+        -
+          name: Template/Fides
+      items:
+        -
+          uuid: 597cd0034dff4229a5948a7ac4d6a079
+          name: 'Raw Data Discovery VPN'
+          type: HTTP_AGENT
+          key: vpn_raw_data
+          delay: 5m
+          trends: '0'
+          value_type: TEXT
+          timeout: 60s
+          url: 'https://{$BASE.URL.V1}/organizations/{$ORGANIZATION.ID}/appliance/vpn/statuses'
+          status_codes: '200,429'
+          headers:
+            -
+              name: '{$NAMEMERAKI}'
+              value: '{$MERAKIKEY}'
+          tags:
+            -
+              tag: Application
+              value: 'Raw Data'
+      discovery_rules:
+        -
+          uuid: 5cca1b21cb5d4524aab71f98cc97dea3
+          name: 'Discovery Device Name'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#DEVICEMAC},.1.3.6.1.4.1.29671.1.1.4.1.1,{#DEVICENAME},.1.3.6.1.4.1.29671.1.1.4.1.2]'
+          key: discovery.devicename
+          delay: 1h
+          lifetime: 0d
+          item_prototypes:
+            -
+              uuid: bd73789402654c60ac29f882119dda9f
+              name: 'Conexões no Dispositivo: ({#DEVICEMAC})'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.29671.1.1.4.1.5.{#SNMPINDEX}'
+              key: 'conexoes.dispositivo.[{#DEVICEMAC}]'
+              delay: 3m
+            -
+              uuid: 9cd4c36de3cf47d7bee5f21571b650e8
+              name: 'IP Publico do Dispositivo: ({#DEVICEMAC})'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.29671.1.1.4.1.7.{#SNMPINDEX}'
+              key: 'ip.publico.dispositivo.[{#DEVICEMAC}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+            -
+              uuid: 4fd582d8db024f62835c540a104db4e9
+              name: 'Nome do Dispositivo: ({#DEVICEMAC})'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.29671.1.1.4.1.2.{#SNMPINDEX}'
+              key: 'nome.dispositivo.[{#DEVICEMAC}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+            -
+              uuid: 06ecbd683d914b5eab920cd9c344f719
+              name: 'Número de série do Dispositivo: ({#DEVICEMAC})'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.29671.1.1.4.1.8.{#SNMPINDEX}'
+              key: 'numero.serie.dispositivo.[{#DEVICEMAC}]'
+              delay: 1h
+              trends: '0'
+              value_type: CHAR
+            -
+              uuid: 3f2d21a51b5741f69cb97e8a29d59721
+              name: 'Status do Dispositivo: ({#DEVICENAME})'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.29671.1.1.4.1.3.{#SNMPINDEX}'
+              key: 'status.dispositivo.[{#DEVICENAME}]'
+              delay: 3m
+              valuemap:
+                name: 'Device Status'
+              trigger_prototypes:
+                -
+                  uuid: 6bd5506875f446f5b4130d3f4162cc43
+                  expression: 'last(/Template SNMP Meraki - v1  - Fides/status.dispositivo.[{#DEVICENAME}])=0'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'max(/Template SNMP Meraki - v1  - Fides/status.dispositivo.[{#DEVICENAME}],#3)=1'
+                  name: 'Status do Dispositivo: ({#DEVICENAME}) é ({ITEM.LASTVALUE})'
+                  priority: HIGH
+                  manual_close: 'YES'
+        -
+          uuid: a1370b50c57641b5be4a6f4b27a9a086
+          name: 'Discovery Network'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#DEVICEMAC},.1.3.6.1.4.1.29671.1.1.5.1.1,{#DEVICEINDEX},.1.3.6.1.4.1.29671.1.1.5.1.2,{#DEVICEINTERFACENAME},.1.3.6.1.4.1.29671.1.1.5.1.3]'
+          key: discovery.network
+          delay: 1h
+          lifetime: 0d
+          item_prototypes:
+            -
+              uuid: 21dda943376f49938f766cfba35fe3ca
+              name: 'Dispositivo: ({#DEVICEMAC}) Interface ({#DEVICEINTERFACENAME}) Bits Received'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.29671.1.1.5.1.7.{#SNMPINDEX}'
+              key: 'bits.received.[{#DEVICEMAC}.{#DEVICEINTERFACENAME}]'
+              delay: 3m
+              units: B
+              preprocessing:
+                -
+                  type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+            -
+              uuid: 0c4316ae2ba34a4aa307078c480a65e4
+              name: 'Dispositivo: ({#DEVICEMAC}) Interface ({#DEVICEINTERFACENAME}) Bits Sent'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.29671.1.1.5.1.6.{#SNMPINDEX}'
+              key: 'bits.sent.[{#DEVICEMAC}.{#DEVICEINTERFACENAME}]'
+              delay: 3m
+              units: B
+              preprocessing:
+                -
+                  type: SIMPLE_CHANGE
+                  parameters:
+                    - ''
+          trigger_prototypes:
+            -
+              uuid: 31d47de2e5f541bd9a0447af07814984
+              expression: 'avg(/Template SNMP Meraki - v1  - Fides/bits.received.[{#DEVICEMAC}.{#DEVICEINTERFACENAME}],{$TIMEALERT})=0 and avg(/Template SNMP Meraki - v1  - Fides/bits.sent.[{#DEVICEMAC}.{#DEVICEINTERFACENAME}],{$TIMEALERT})=0'
+              recovery_mode: RECOVERY_EXPRESSION
+              recovery_expression: 'avg(/Template SNMP Meraki - v1  - Fides/bits.received.[{#DEVICEMAC}.{#DEVICEINTERFACENAME}],{$TIMEALERT})<>0 or avg(/Template SNMP Meraki - v1  - Fides/bits.sent.[{#DEVICEMAC}.{#DEVICEINTERFACENAME}],{$TIMEALERT})<>0'
+              name: 'A Interface ({#DEVICEINTERFACENAME}) do dispositivo ({#DEVICEMAC}) está sem enviar dados a mais de {$TIMEALERT}'
+              priority: HIGH
+              manual_close: 'YES'
+        -
+          uuid: 98b77c1bdb1345879f5b432727ed970a
+          name: 'VPN Status'
+          type: DEPENDENT
+          key: vpn.status
+          delay: '0'
+          lifetime: 0d
+          item_prototypes:
+            -
+              uuid: 373aa9f04ac34868874852da9daf1131
+              name: 'VPN - ({#NETWORKNAME}) Status'
+              type: DEPENDENT
+              key: 'vpn[{#NETWORKNAME}]'
+              delay: '0'
+              valuemap:
+                name: 'VPN Status'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$..[?(@.networkName == "{#NETWORKNAME}")]'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $..reachability.first()
+                -
+                  type: STR_REPLACE
+                  parameters:
+                    - reachable
+                    - '1'
+              master_item:
+                key: vpn_raw_data
+              trigger_prototypes:
+                -
+                  uuid: f47aed117a764acf99995fda7fb9668e
+                  expression: 'last(/Template SNMP Meraki - v1  - Fides/vpn[{#NETWORKNAME}])<>1'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'max(/Template SNMP Meraki - v1  - Fides/vpn[{#NETWORKNAME}],#3)=1'
+                  name: 'Status da VPN ({#NETWORKNAME}) - ({LAST.ITEMVALUE})'
+                  priority: HIGH
+          master_item:
+            key: vpn_raw_data
+          lld_macro_paths:
+            -
+              lld_macro: '{#DEVICESERIAL}'
+              path: $..deviceSerial
+            -
+              lld_macro: '{#NETWORKNAME}'
+              path: $..networkName.first()
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $..merakiVpnPeers
+      macros:
+        -
+          macro: '{$BASE.URL}'
+          value: api.meraki.com/api/v0
+        -
+          macro: '{$BASE.URL.V1}'
+          value: api-mp.meraki.com/api/v1
+        -
+          macro: '{$DEVICEINTERFACEINDEX}'
+          value: '{#DEVICEINTERFACEINDEX}'
+        -
+          macro: '{$MERAKIKEY}'
+          value: Meraki.Key
+        -
+          macro: '{$NAMEMERAKI}'
+          value: X-Cisco-Meraki-API-Key
+        -
+          macro: '{$NETWORK.ID}'
+          value: network.id
+        -
+          macro: '{$ORGANIZATION.ID}'
+          value: Organization.id
+        -
+          macro: '{$TIMEALERT}'
+          value: 5m
+      valuemaps:
+        -
+          uuid: 1981b447773245ae838505b314cbb41a
+          name: 'Device Status'
+          mappings:
+            -
+              value: '0'
+              newvalue: Offline
+            -
+              value: '1'
+              newvalue: Online
+        -
+          uuid: 3613f68f670b45b78f76acbb9684b2f4
+          name: 'Meraki AP Status'
+          mappings:
+            -
+              value: '1'
+              newvalue: Online
+            -
+              value: '0'
+              newvalue: Offline
+            -
+              value: '2'
+              newvalue: Alerting
+        -
+          uuid: 0684e92d05474846b42b78b21a1a00a2
+          name: 'VPN Status'
+          mappings:
+            -
+              value: '1'
+              newvalue: Reachable
+            -
+              value: '0'
+              newvalue: Unreacheble
+            -
+              type: GREATER_OR_EQUAL
+              value: '2'
+              newvalue: Unknown
