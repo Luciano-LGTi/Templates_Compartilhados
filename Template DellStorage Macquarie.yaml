@@ -1,0 +1,467 @@
+zabbix_export:
+  version: '5.4'
+  date: '2023-01-23T12:53:21Z'
+  groups:
+    -
+      uuid: 22c56bc7fa9e4eb5bee59f75085657d4
+      name: Template/CruzeiroDoSul
+  templates:
+    -
+      uuid: b4423716fd82432ab2b547b54deaa214
+      template: 'Template DellStorage Macquarie'
+      name: 'Template DellStorage Macquarie'
+      groups:
+        -
+          name: Template/CruzeiroDoSul
+      items:
+        -
+          uuid: 9a695a77acf94922a0a555a2951f4ea8
+          name: 'Global Status'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.674.11000.2000.500.1.2.6.0
+          key: productIDGlobalStatus
+          delay: 5m
+          valuemap:
+            name: 'Global Status Dell'
+          request_method: POST
+          tags:
+            -
+              tag: Application
+              value: 'Global Status'
+          triggers:
+            -
+              uuid: d4db50524ca748088041cdf7bbbf91e3
+              expression: 'last(/Template DellStorage Macquarie/productIDGlobalStatus)=4'
+              name: 'Global Status is {ITEM.LASTVALUE}'
+              priority: WARNING
+              dependencies:
+                -
+                  name: 'Global Status is {ITEM.LASTVALUE}'
+                  expression: 'last(/Template DellStorage Macquarie/productIDGlobalStatus)=5'
+            -
+              uuid: 156de5b04ce0412ba6882461fcec0192
+              expression: 'last(/Template DellStorage Macquarie/productIDGlobalStatus)=5'
+              name: 'Global Status is {ITEM.LASTVALUE}'
+              priority: HIGH
+        -
+          uuid: 79a0627722f7442282c176259725334b
+          name: 'Ambient Temperature'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.674.11000.2000.500.1.2.23.1.5.1.1
+          key: scEnclTempCurrentC.1.1
+          delay: 3m
+          status: DISABLED
+          value_type: FLOAT
+          units: °C
+          request_method: POST
+          tags:
+            -
+              tag: Application
+              value: Temperature
+          triggers:
+            -
+              uuid: b351a426cb61441caef805f558f8bc26
+              expression: 'last(/Template DellStorage Macquarie/scEnclTempCurrentC.1.1)>28'
+              name: 'Macquarie Storage High Temperature over 28 ºC'
+              priority: HIGH
+      discovery_rules:
+        -
+          uuid: 4b914f81b691455fb962533acdf84f2a
+          name: Alerts
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.11000.2000.500.1.2.46.1.2]'
+          key: 'scAlertNbr[{#SNMPINDEX}]'
+          delay: 5m
+          lifetime: '0'
+          item_prototypes:
+            -
+              uuid: ed5bbb8447bc403cbfa5b1dfd0184fff
+              name: 'Macquarie Storage Controller $1 Alert'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.46.1.3.{#SNMPINDEX}'
+              key: 'scAlertStatus[{#SNMPVALUE}]'
+              delay: 5m
+              valuemap:
+                name: 'DellStorage alerts'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: Alerts
+              trigger_prototypes:
+                -
+                  uuid: cb1bb104e5f84d23a31cbb05f039ba94
+                  expression: 'last(/Template DellStorage Macquarie/scAlertStatus[{#SNMPVALUE}])=1'
+                  name: 'Storage Macquarie Status Alert Log changed to Critical'
+                  priority: HIGH
+                  description: |
+                    ### Documento referente aos cliente da LCS-Central de Serviços ###
+                    
+                    https://lcsonline.sharepoint.com/:x:/r/sites/MSS/_layouts/15/WopiFrame.aspx?sourcedoc=%7Bce3eaff7-889a-4a17-a72d-5e904191da09%7D&action=default
+                -
+                  uuid: 955974718cb0480da8f66b765f931e9e
+                  expression: 'last(/Template DellStorage Macquarie/scAlertStatus[{#SNMPVALUE}])=4'
+                  name: 'Storage Macquarie Status Alert Log changed to Down'
+                  priority: HIGH
+                  description: |
+                    ### Documento referente aos cliente da LCS-Central de Serviços ###
+                    
+                    https://lcsonline.sharepoint.com/:x:/r/sites/MSS/_layouts/15/WopiFrame.aspx?sourcedoc=%7Bce3eaff7-889a-4a17-a72d-5e904191da09%7D&action=default
+                -
+                  uuid: 133a02e242c24d1b81b169c982b2d0ea
+                  expression: 'last(/Template DellStorage Macquarie/scAlertStatus[{#SNMPVALUE}])=5'
+                  name: 'Storage Macquarie Status Alert Log changed to Emergency'
+                  priority: HIGH
+                  description: |
+                    ### Documento referente aos cliente da LCS-Central de Serviços ###
+                    
+                    https://lcsonline.sharepoint.com/:x:/r/sites/MSS/_layouts/15/WopiFrame.aspx?sourcedoc=%7Bce3eaff7-889a-4a17-a72d-5e904191da09%7D&action=default
+                -
+                  uuid: 84475e5abbb24ee9b291b2d0522c8d00
+                  expression: 'last(/Template DellStorage Macquarie/scAlertStatus[{#SNMPVALUE}])=8'
+                  name: 'Storage Macquarie Status Alert Log changed to Unavailable'
+                  priority: HIGH
+                  description: |
+                    ### Documento referente aos cliente da LCS-Central de Serviços ###
+                    
+                    https://lcsonline.sharepoint.com/:x:/r/sites/MSS/_layouts/15/WopiFrame.aspx?sourcedoc=%7Bce3eaff7-889a-4a17-a72d-5e904191da09%7D&action=default
+          request_method: POST
+        -
+          uuid: 63e72aaf0d3f40b1aa824d0ed2b31bee
+          name: Controller
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.11000.2000.500.1.2.13.1.2]'
+          key: 'scCtlrNbr[{#SNMPINDEX}]'
+          delay: 5m
+          lifetime: '0'
+          item_prototypes:
+            -
+              uuid: 2eac97c79ebf4b75b127cd50a470f330
+              name: 'Controller {#SNMPVALUE} Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.13.1.3.{#SNMPINDEX}'
+              key: 'scCtlrStatus[{#SNMPVALUE}]'
+              delay: 5m
+              valuemap:
+                name: 'DellStorage Volume Status'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Controller Status'
+              trigger_prototypes:
+                -
+                  uuid: a4da336469e54e9f99382b9802ad30ef
+                  expression: 'last(/Template DellStorage Macquarie/scCtlrStatus[{#SNMPVALUE}])<>1'
+                  name: 'Storage Macquarie Controller {#SNMPVALUE} Status changed to {ITEM.VALUE1}'
+                  priority: HIGH
+                  description: |
+                    ### Documento referente aos cliente da LCS-Central de Serviços ###
+                    
+                    https://lcsonline.sharepoint.com/:x:/r/sites/MSS/_layouts/15/WopiFrame.aspx?sourcedoc=%7Bce3eaff7-889a-4a17-a72d-5e904191da09%7D&action=default
+          request_method: POST
+        -
+          uuid: 976167c7e74644b4897836d85f13f4ad
+          name: 'Volume(s) Size'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.4]'
+          key: 'scDiskFolderName[{#SNMPINDEX}]'
+          delay: 5m
+          lifetime: '0'
+          item_prototypes:
+            -
+              uuid: b300191976f14216b39b609bf48e128c
+              name: 'Free Disk Space on folder $1 (percentage)'
+              type: CALCULATED
+              key: 'FreeDiskPercent[{#SNMPVALUE}]'
+              delay: 330s
+              value_type: FLOAT
+              units: '%'
+              params: '100 - last(//UsedInPercent[{#SNMPVALUE}])'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Total Space Allocated'
+              trigger_prototypes:
+                -
+                  uuid: d9a074a466ba437e9656ce9475ce8cdd
+                  expression: 'last(/Template DellStorage Macquarie/FreeDiskPercent[{#SNMPVALUE}])<1'
+                  name: 'Free disk space is less than 1% on folder name {#SNMPVALUE}'
+                  priority: DISASTER
+                  description: |
+                    ### Documento referente aos cliente da LCS-Central de Serviços ###
+                    
+                    https://lcsonline.sharepoint.com/:x:/r/sites/MSS/_layouts/15/WopiFrame.aspx?sourcedoc=%7Bce3eaff7-889a-4a17-a72d-5e904191da09%7D&action=default
+                -
+                  uuid: 61904ebb134b47c89fa729ceac13f723
+                  expression: 'last(/Template DellStorage Macquarie/FreeDiskPercent[{#SNMPVALUE}])<5'
+                  name: 'Free disk space is less than 5% on folder name {#SNMPVALUE}'
+                  priority: HIGH
+                  description: |
+                    ### Documento referente aos cliente da LCS-Central de Serviços ###
+                    
+                    https://lcsonline.sharepoint.com/:x:/r/sites/MSS/_layouts/15/WopiFrame.aspx?sourcedoc=%7Bce3eaff7-889a-4a17-a72d-5e904191da09%7D&action=default
+                  dependencies:
+                    -
+                      name: 'Free disk space is less than 1% on folder name {#SNMPVALUE}'
+                      expression: 'last(/Template DellStorage Macquarie/FreeDiskPercent[{#SNMPVALUE}])<1'
+            -
+              uuid: cc503c1fc7c045cda7e4e94168864458
+              name: 'Free Disk Space on folder $1'
+              type: CALCULATED
+              key: 'FreeDiskSpace[{#SNMPVALUE}]'
+              delay: 330s
+              value_type: FLOAT
+              units: T
+              params: 'last(//scDiskFolderSUAllocSpace[{#SNMPVALUE}]) - last(//scDiskFolderSUUsedSpace2[{#SNMPVALUE}])'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Total Space Allocated'
+            -
+              uuid: 7e88ba0cfb654349b28f69e141d795a0
+              name: 'Space Allocated on folder $1'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.32.1.7.{#SNMPINDEX}'
+              key: 'scDiskFolderSUAllocSpace[{#SNMPVALUE}]'
+              delay: 5m
+              value_type: FLOAT
+              units: T
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '0.001'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Total Space Allocated'
+            -
+              uuid: 1cbc1b4c163646859d5c5d9b8e89f603
+              name: 'Total Space Available on folder $1'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.32.1.5.{#SNMPINDEX}'
+              key: 'scDiskFolderSUTotalSpace2[{#SNMPVALUE}]'
+              delay: 5m
+              value_type: FLOAT
+              units: T
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '0.001'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Total Space Allocated'
+            -
+              uuid: 3af885fdc0944a2090bd75887d220870
+              name: 'Total Space Used on folder $1'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.32.1.6.{#SNMPINDEX}'
+              key: 'scDiskFolderSUUsedSpace2[{#SNMPVALUE}]'
+              delay: 5m
+              value_type: FLOAT
+              units: T
+              preprocessing:
+                -
+                  type: MULTIPLIER
+                  parameters:
+                    - '0.001'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Total Space Allocated'
+            -
+              uuid: 790768ea83f14378b6d6eb247abe1a92
+              name: 'Used disk on folder $1 (percentage)'
+              type: CALCULATED
+              key: 'UsedInPercent[{#SNMPVALUE}]'
+              delay: 5m
+              value_type: FLOAT
+              units: '%'
+              params: 'last(//scDiskFolderSUUsedSpace2[{#SNMPVALUE}]) * 100 / last(//scDiskFolderSUAllocSpace[{#SNMPVALUE}])'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Total Space Allocated'
+          request_method: POST
+        -
+          uuid: 35c5b612dd1d47bcac6e103d5553c64f
+          name: 'Physical Disks'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.11000.2000.500.1.2.14.1.4]'
+          key: 'scDiskNamePosition[{#SNMPINDEX}]'
+          delay: 5m
+          lifetime: '0'
+          item_prototypes:
+            -
+              uuid: ac3946617a314a78afee95b7f6417aa5
+              name: 'Disk Name {#SNMPVALUE} Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.14.1.3.{#SNMPINDEX}'
+              key: 'scDiskStatus[{#SNMPVALUE}]'
+              delay: 5m
+              valuemap:
+                name: 'DellStorage Volume Status'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Physical Disk'
+              trigger_prototypes:
+                -
+                  uuid: f7fdb120ba3e4c03943db1b8373f560f
+                  expression: 'last(/Template DellStorage Macquarie/scDiskStatus[{#SNMPVALUE}])<>1'
+                  name: 'Storage Macquarie Status of Disk Name {#SNMPVALUE} changed to {ITEM.VALUE1}'
+                  priority: HIGH
+                  description: |
+                    ### Documento referente aos cliente da LCS-Central de Serviços ###
+                    
+                    https://lcsonline.sharepoint.com/:x:/r/sites/MSS/_layouts/15/WopiFrame.aspx?sourcedoc=%7Bce3eaff7-889a-4a17-a72d-5e904191da09%7D&action=default
+          request_method: POST
+        -
+          uuid: 1d9f7a9b6847435b8db410df144cbda5
+          name: 'Power Device'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.11000.2000.500.1.2.21.1.2]'
+          key: 'scEnclPowerNbr[{#SNMPINDEX}]'
+          delay: 5m
+          lifetime: '0'
+          item_prototypes:
+            -
+              uuid: 887c5f6877de4dfaba93d404872f1f27
+              name: 'Power Supply  {#SNMPVALUE} Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.21.1.3.{#SNMPINDEX}'
+              key: 'scEnclPowerStatus[{#SNMPVALUE}]'
+              delay: 5m
+              valuemap:
+                name: 'DellStorage Volume Status'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Power Supply'
+              trigger_prototypes:
+                -
+                  uuid: 96b22dc5ea0a4bd2b201bf8c91eac843
+                  expression: 'last(/Template DellStorage Macquarie/scEnclPowerStatus[{#SNMPVALUE}])<>1'
+                  name: 'Storage Macquarie power supply Status {#SNMPVALUE} changed to {ITEM.VALUE1}'
+                  priority: HIGH
+                  description: |
+                    ### Documento referente aos cliente da LCS-Central de Serviços ###
+                    
+                    https://lcsonline.sharepoint.com/:x:/r/sites/MSS/_layouts/15/WopiFrame.aspx?sourcedoc=%7Bce3eaff7-889a-4a17-a72d-5e904191da09%7D&action=default
+          request_method: POST
+        -
+          uuid: 38f973d3a8f5448d826721160899c99d
+          name: 'Volume(s) Status'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.674.11000.2000.500.1.2.26.1.4]'
+          key: 'scVolumeName[{#SNMPINDEX}]'
+          delay: 5m
+          lifetime: '0'
+          item_prototypes:
+            -
+              uuid: 2aea2dd2eb564844837655a4c75a0b5e
+              name: 'Volume {#SNMPVALUE} Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.26.1.3.{#SNMPINDEX}'
+              key: 'scVolumeStatus[{#SNMPVALUE}]'
+              delay: 5m
+              trends: '0'
+              valuemap:
+                name: 'DellStorage Volume Status'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: Volume
+              trigger_prototypes:
+                -
+                  uuid: 4901175283ff4e86bda8dde100db45b3
+                  expression: 'last(/Template DellStorage Macquarie/scVolumeStatus[{#SNMPVALUE}])<>1'
+                  name: 'Storage Macquarie Volume Status of {#SNMPVALUE} changed to {ITEM.VALUE1}'
+                  priority: HIGH
+                  description: |
+                    ### Documento referente aos cliente da LCS-Central de Serviços ###
+                    
+                    https://lcsonline.sharepoint.com/:x:/r/sites/MSS/_layouts/15/WopiFrame.aspx?sourcedoc=%7Bce3eaff7-889a-4a17-a72d-5e904191da09%7D&action=default
+          request_method: POST
+      valuemaps:
+        -
+          uuid: 5e4ba590cb814b139e7eff9d010f3f89
+          name: 'DellStorage alerts'
+          mappings:
+            -
+              value: '0'
+              newvalue: Complete
+            -
+              value: '1'
+              newvalue: Critical
+            -
+              value: '2'
+              newvalue: Degraded
+            -
+              value: '3'
+              newvalue: Deleting
+            -
+              value: '4'
+              newvalue: Down
+            -
+              value: '5'
+              newvalue: Emergency
+            -
+              value: '6'
+              newvalue: Inform
+            -
+              value: '7'
+              newvalue: Okay
+            -
+              value: '8'
+              newvalue: Unavailable
+            -
+              value: '9'
+              newvalue: Unknown
+        -
+          uuid: aea5ea46e5ac4764bd014f13f854a866
+          name: 'DellStorage Volume Status'
+          mappings:
+            -
+              value: '1'
+              newvalue: Up
+            -
+              value: '2'
+              newvalue: Down
+            -
+              value: '3'
+              newvalue: Degraded
+        -
+          uuid: 70fa0aef5f094c308f841dfb4ccd84a5
+          name: 'Global Status Dell'
+          mappings:
+            -
+              value: '1'
+              newvalue: Other
+            -
+              value: '2'
+              newvalue: Unknown
+            -
+              value: '3'
+              newvalue: Ok
+            -
+              value: '4'
+              newvalue: Noncritical
+            -
+              value: '5'
+              newvalue: Critical
+            -
+              value: '6'
+              newvalue: Nonrecoverable
