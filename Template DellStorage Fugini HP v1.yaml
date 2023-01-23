@@ -1,0 +1,545 @@
+zabbix_export:
+  version: '5.4'
+  date: '2023-01-23T14:37:20Z'
+  groups:
+    -
+      uuid: 8275ac4ee35a4fcaa47bbc3f2a202086
+      name: Template/Fugini
+  templates:
+    -
+      uuid: 5f51cdf3c8e34edba1c29cb27263ace2
+      template: 'Template DellStorage Fugini HP v1'
+      name: 'Template DellStorage Fugini HP v1'
+      groups:
+        -
+          name: Template/Fugini
+      items:
+        -
+          uuid: 6a42fad4af4d4c7083fae42025cb7112
+          name: 'Global Status'
+          type: SNMP_AGENT
+          snmp_oid: .1.3.6.1.4.1.674.11000.2000.500.1.2.6.0
+          key: productIDGlobalStatus
+          delay: 5m
+          valuemap:
+            name: 'Global Status Dell'
+          request_method: POST
+          tags:
+            -
+              tag: Application
+              value: 'Global Status'
+          triggers:
+            -
+              uuid: 11eb9fa2e0384e0fb6906494a45dbca6
+              expression: 'last(/Template DellStorage Fugini HP v1/productIDGlobalStatus)<>3'
+              name: 'Global Status is {ITEM.LASTVALUE}'
+              priority: HIGH
+              manual_close: 'YES'
+        -
+          uuid: 50bfdfb1f7b44fd3b3596de884909743
+          name: 'Ambient Temperature'
+          type: SNMP_AGENT
+          snmp_oid: 'DELL-STORAGE-SC-MIB::scEnclTempCurrentC.1.1'
+          key: scEnclTempCurrentC.1.1
+          status: DISABLED
+          value_type: FLOAT
+          units: °C
+          request_method: POST
+          tags:
+            -
+              tag: Application
+              value: Temperature
+      discovery_rules:
+        -
+          uuid: 1146b98606454ba0989e6a950c8c545b
+          name: 'Fan Status'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.674.11000.2000.500.1.2.16.1.2]'
+          key: 'scCtlrFanNbr[{#SNMPINDEX}]'
+          delay: 1h
+          lifetime: '0'
+          item_prototypes:
+            -
+              uuid: fa5e63cc41f14243bbd457e47dc451c1
+              name: 'Fan {#SNMPVALUE} Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.16.1.3.{#SNMPINDEX}'
+              key: 'scCtlrFanStatus[{#SNMPVALUE}]'
+              delay: 5m
+              valuemap:
+                name: 'Data Domain FanStatus'
+              tags:
+                -
+                  tag: Application
+                  value: 'Fan Status'
+              trigger_prototypes:
+                -
+                  uuid: 7b93676bd3df43c78950f328dc6c633c
+                  expression: 'avg(/Template DellStorage Fugini HP v1/scCtlrFanStatus[{#SNMPVALUE}],10m)<>1'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'last(/Template DellStorage Fugini HP v1/scCtlrFanStatus[{#SNMPVALUE}])=1'
+                  name: 'Fan {#SNMPVALUE} está {ITEM.VALUE}'
+                  priority: HIGH
+        -
+          uuid: 2d5fad8066404aa18c4f5d8a347c9c4d
+          name: Controller
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.11000.2000.500.1.2.13.1.2]'
+          key: 'scCtlrNbr[{#SNMPINDEX}]'
+          delay: 1h
+          lifetime: '0'
+          item_prototypes:
+            -
+              uuid: bf9f45285ddc411a994b63ea49c1883b
+              name: 'Controller {#SNMPVALUE} Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.13.1.3.{#SNMPINDEX}'
+              key: 'scCtlrStatus[{#SNMPVALUE}]'
+              delay: 5m
+              valuemap:
+                name: 'DellStorage Volume Status'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Controller Status'
+              trigger_prototypes:
+                -
+                  uuid: 00873d77a8f04eea9116487436be23ec
+                  expression: 'last(/Template DellStorage Fugini HP v1/scCtlrStatus[{#SNMPVALUE}])<>1'
+                  name: 'Storage  Controller {#SNMPVALUE} Status changed to {ITEM.VALUE1}'
+                  priority: HIGH
+          request_method: POST
+        -
+          uuid: b2db6cb650e8449f91a5612837b7254a
+          name: 'Folder(s) Size'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.11000.2000.500.1.2.25.1.4]'
+          key: 'scDiskFolderName[{#SNMPINDEX}]'
+          delay: 1h
+          filter:
+            conditions:
+              -
+                macro: '{#SNMPVALUE}'
+                value: 10K
+                formulaid: A
+              -
+                macro: '{#SNMPVALUE}'
+                value: Assigned
+                formulaid: B
+          lifetime: '0'
+          item_prototypes:
+            -
+              uuid: 1b8a28d1b4b7432b93270015e62af891
+              name: 'Free disk percentage on folder $1'
+              type: CALCULATED
+              key: 'FreeInPercent[{#SNMPVALUE}]'
+              delay: 5m
+              value_type: FLOAT
+              units: '%'
+              params: 'last(//scDiskFolderSUFreeSpace[{#SNMPVALUE}]) * 100 / last(//scDiskFolderAvailableSpace[{#SNMPVALUE}])'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Total Space Allocated'
+            -
+              uuid: b0ec406d0f2d4077b90585b9d8e8213b
+              name: 'Raw Data Space on folder $1 Allocated'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.32.1.7.{#SNMPINDEX}'
+              key: 'rawdata_scDiskFolderSUAllocSpace[{#SNMPVALUE}]'
+              delay: 5m
+              value_type: FLOAT
+              units: '!TB'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Raw Data Total Space Allocated'
+            -
+              uuid: 6af7883b7e364b67844eb22df63a1ce2
+              name: 'Raw Data Free Disk Space on folder $1'
+              type: SNMP_AGENT
+              snmp_oid: .1.3.6.1.4.1.674.11000.2000.500.1.2.32.1.8.2
+              key: 'rawdata_scDiskFolderSUFreeSpace[{#SNMPVALUE}]'
+              delay: 5m
+              value_type: FLOAT
+              units: '!TB'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Raw Data Total Space Allocated'
+            -
+              uuid: ed0f924b9695414aa14b6aecfdfd67f1
+              name: 'Raw Data Disk Folder TotalSpace $1'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.32.1.5.{#SNMPINDEX}'
+              key: 'rawdata_scDiskFolderSUTotalSpace2.2[{#SNMPVALUE}]'
+              delay: 5m
+              value_type: FLOAT
+              units: '!TB'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Raw Data Total Space Allocated'
+            -
+              uuid: 341b2d860c284a4c855ad91677c978d8
+              name: 'Raw Data Disk Folder Used $1'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.32.1.6.{#SNMPINDEX}'
+              key: 'rawdata_scDiskFolderSUUsedSpace2.2[{#SNMPVALUE}]'
+              delay: 5m
+              value_type: FLOAT
+              units: '!TB'
+              tags:
+                -
+                  tag: Application
+                  value: 'Raw Data Total Space Allocated'
+            -
+              uuid: 2754ba78b16c49a5bca16d196b8fad33
+              name: 'Available Space on folder $1'
+              type: CALCULATED
+              key: 'scDiskFolderAvailableSpace[{#SNMPVALUE}]'
+              delay: 5m
+              value_type: FLOAT
+              units: '!TB'
+              params: 'last(//scDiskFolderSUAllocSpace[{#SNMPVALUE}]) + last(//scDiskFolderSUFreeSpace[{#SNMPVALUE}])'
+              tags:
+                -
+                  tag: Application
+                  value: 'Total Space Allocated'
+            -
+              uuid: baba5d0b5618425cb30097b5181444d7
+              name: 'Space on folder Allocated $1'
+              type: CALCULATED
+              key: 'scDiskFolderSUAllocSpace[{#SNMPVALUE}]'
+              delay: 5m
+              value_type: FLOAT
+              units: '!TB'
+              params: 'last(//rawdata_scDiskFolderSUAllocSpace[{#SNMPVALUE}]) / 1024'
+              tags:
+                -
+                  tag: Application
+                  value: 'Total Space Allocated'
+            -
+              uuid: 8a7d383cc9954ea08a9f34045800ae29
+              name: 'Free Disk Space on folder $1'
+              type: CALCULATED
+              key: 'scDiskFolderSUFreeSpace[{#SNMPVALUE}]'
+              delay: 5m
+              value_type: FLOAT
+              units: '!TB'
+              params: 'last(//rawdata_scDiskFolderSUFreeSpace[{#SNMPVALUE}]) / 1024'
+              tags:
+                -
+                  tag: Application
+                  value: 'Total Space Allocated'
+            -
+              uuid: aa99002b8fbf49f5a261e1a4713d82bd
+              name: 'Total Space on folder $1'
+              type: CALCULATED
+              key: 'scDiskFolderSUTotalSpace2.2[{#SNMPVALUE}]'
+              delay: 5m
+              value_type: FLOAT
+              units: '!TB'
+              params: 'last(//rawdata_scDiskFolderSUTotalSpace2.2[{#SNMPVALUE}]) / 1024'
+              tags:
+                -
+                  tag: Application
+                  value: 'Total Space Allocated'
+            -
+              uuid: 74e98502960545d9a073d57c057718d0
+              name: 'Disk Used on folder $1'
+              type: CALCULATED
+              key: 'scDiskFolderSUUsedSpace2.2[{#SNMPVALUE}]'
+              delay: 5m
+              value_type: FLOAT
+              units: '!TB'
+              params: 'last(//rawdata_scDiskFolderSUUsedSpace2.2[{#SNMPVALUE}]) / 1024'
+              tags:
+                -
+                  tag: Application
+                  value: 'Total Space Allocated'
+            -
+              uuid: 26fb8a2206fe42539eaccd70928ffcda
+              name: 'Used Space percentage disk on folder $1'
+              type: CALCULATED
+              key: 'UsedDiskPercent[{#SNMPVALUE}]'
+              delay: 5m
+              value_type: FLOAT
+              units: '%'
+              params: '100 - last(//FreeInPercent[{#SNMPVALUE}])'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Total Space Allocated'
+              trigger_prototypes:
+                -
+                  uuid: be3aa5d029e7494883cf5274c71bcacd
+                  expression: 'last(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}])<1'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'last(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}])>1'
+                  name: 'Free disk space is less than 1% on folder name {#SNMPVALUE}'
+                  priority: DISASTER
+                -
+                  uuid: 01cb136eef4544b0a157386d457e7b62
+                  expression: 'avg(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}],15m)<3'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'avg(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}],30m)>3'
+                  name: 'Free disk space is less than 3% on folder name {#SNMPVALUE}'
+                  priority: HIGH
+                  dependencies:
+                    -
+                      name: 'Free disk space is less than 1% on folder name {#SNMPVALUE}'
+                      expression: 'last(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}])<1'
+                      recovery_expression: 'last(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}])>1'
+                -
+                  uuid: 373b0a97ab28405cb312bc63e2b785ad
+                  expression: 'avg(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}],15m)<5'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'avg(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}],30m)>5'
+                  name: 'Free disk space is less than 5% on folder name {#SNMPVALUE}'
+                  priority: AVERAGE
+                  dependencies:
+                    -
+                      name: 'Free disk space is less than 1% on folder name {#SNMPVALUE}'
+                      expression: 'last(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}])<1'
+                      recovery_expression: 'last(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}])>1'
+                    -
+                      name: 'Free disk space is less than 3% on folder name {#SNMPVALUE}'
+                      expression: 'avg(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}],15m)<3'
+                      recovery_expression: 'avg(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}],30m)>3'
+                -
+                  uuid: 46cf498a420643af95cf1b7c60bc4354
+                  expression: 'avg(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}],15m)<8'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'avg(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}],30m)>8'
+                  name: 'Free disk space is less than 8% on folder name {#SNMPVALUE}'
+                  priority: AVERAGE
+                  dependencies:
+                    -
+                      name: 'Free disk space is less than 1% on folder name {#SNMPVALUE}'
+                      expression: 'last(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}])<1'
+                      recovery_expression: 'last(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}])>1'
+                    -
+                      name: 'Free disk space is less than 3% on folder name {#SNMPVALUE}'
+                      expression: 'avg(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}],15m)<3'
+                      recovery_expression: 'avg(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}],30m)>3'
+                    -
+                      name: 'Free disk space is less than 5% on folder name {#SNMPVALUE}'
+                      expression: 'avg(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}],15m)<5'
+                      recovery_expression: 'avg(/Template DellStorage Fugini HP v1/UsedDiskPercent[{#SNMPVALUE}],30m)>5'
+          request_method: POST
+        -
+          uuid: dc3f9b7f70394ade823fdb3baa543a29
+          name: 'Physical Disks'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},1.3.6.1.4.1.674.11000.2000.500.1.2.14.1.4]'
+          key: 'scDiskNamePosition[{#SNMPINDEX}]'
+          delay: 1h
+          lifetime: '0'
+          item_prototypes:
+            -
+              uuid: 17d6a39e6e0b4cbd93deb7390c67a392
+              name: 'Disk Name {#SNMPVALUE} Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.14.1.3.{#SNMPINDEX}'
+              key: 'scDiskStatus[{#SNMPVALUE}]'
+              delay: 5m
+              valuemap:
+                name: 'DellStorage Volume Status'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Physical Disk'
+              trigger_prototypes:
+                -
+                  uuid: 278f096478ff4a6b883800f296419200
+                  expression: 'last(/Template DellStorage Fugini HP v1/scDiskStatus[{#SNMPVALUE}])<>1'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'last(/Template DellStorage Fugini HP v1/scDiskStatus[{#SNMPVALUE}])=1'
+                  name: 'Storage Status of Disk Name {#SNMPVALUE} changed to {ITEM.VALUE1}'
+                  priority: HIGH
+          request_method: POST
+        -
+          uuid: 0c94b0eda7464d1e9651791b1c154dec
+          name: 'Power Supply'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.674.11000.2000.500.1.2.17.1.2]'
+          key: 'scEnclPowerNbr[{#SNMPINDEX}]'
+          delay: 1h
+          lifetime: '0'
+          item_prototypes:
+            -
+              uuid: 54176f26cb044a6195619bd7ef0320b3
+              name: 'Power Supply  {#SNMPVALUE} Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.17.1.3.{#SNMPINDEX}'
+              key: 'scEnclPowerStatus[{#SNMPVALUE}]'
+              delay: 5m
+              valuemap:
+                name: 'DellStorage Volume Status'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: 'Power Supply'
+              trigger_prototypes:
+                -
+                  uuid: d9f2309605c546b993f74c9b135c5dcc
+                  expression: 'last(/Template DellStorage Fugini HP v1/scEnclPowerStatus[{#SNMPVALUE}])<>1'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'last(/Template DellStorage Fugini HP v1/scEnclPowerStatus[{#SNMPVALUE}])=1'
+                  name: 'Storage power supply Status {#SNMPVALUE} changed to {ITEM.VALUE1}'
+                  priority: HIGH
+          request_method: POST
+        -
+          uuid: 4887168a4da04c5a8644588ca43d468a
+          name: Server(s)
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.16139.2.27.1.4.1]'
+          key: scServerName
+          delay: 1h
+          lifetime: '0'
+          item_prototypes:
+            -
+              uuid: 5bb9094c2e00489d8a5e084cd490b957
+              name: 'Connectivity for server $1'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.16139.2.27.1.5.{#SNMPINDEX}'
+              key: 'scServerCnctvy[{#SNMPVALUE}]'
+              delay: 5m
+              valuemap:
+                name: scServerCnctvy
+              tags:
+                -
+                  tag: Application
+                  value: Server(s)
+            -
+              uuid: 979e05d77bd8474796f8f79d7b93e5ec
+              name: 'Status for server $1'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.16139.2.27.1.3.{#SNMPINDEX}'
+              key: 'scServerStatus[{#SNMPVALUE}]'
+              delay: 5m
+              valuemap:
+                name: scItemStatus
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: Server(s)
+          request_method: POST
+        -
+          uuid: 49702465abbc4618b607a70d31a09ef4
+          name: 'Volume(s) Status'
+          type: SNMP_AGENT
+          snmp_oid: 'discovery[{#SNMPVALUE},.1.3.6.1.4.1.674.11000.2000.500.1.2.26.1.4,{#VOLUME_INDEX},.1.3.6.1.4.1.674.11000.2000.500.1.2.26.1.2]'
+          key: 'scVolumeName[{#SNMPINDEX}]'
+          delay: 1h
+          lifetime: '0'
+          item_prototypes:
+            -
+              uuid: 024f23fb820a4bc686f47deb0707cf9b
+              name: 'Volume {#VOLUME_INDEX} - {#SNMPVALUE} Status'
+              type: SNMP_AGENT
+              snmp_oid: '.1.3.6.1.4.1.674.11000.2000.500.1.2.26.1.3.{#SNMPINDEX}'
+              key: 'scVolumeStatus[{#VOLUME_INDEX}]'
+              delay: 5m
+              trends: '0'
+              valuemap:
+                name: 'DellStorage Volume Status'
+              request_method: POST
+              tags:
+                -
+                  tag: Application
+                  value: Volume
+              trigger_prototypes:
+                -
+                  uuid: 6c09de6f7b574d858ac607e36bebbd0b
+                  expression: 'last(/Template DellStorage Fugini HP v1/scVolumeStatus[{#VOLUME_INDEX}])<>1'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: 'last(/Template DellStorage Fugini HP v1/scVolumeStatus[{#VOLUME_INDEX}])=1'
+                  name: 'Storage Volume Status of {#SNMPVALUE} changed to {ITEM.VALUE1}'
+                  priority: AVERAGE
+          request_method: POST
+      valuemaps:
+        -
+          uuid: 8bbfa9b78f204da0abaa9c50b3553647
+          name: 'Data Domain FanStatus'
+          mappings:
+            -
+              value: '0'
+              newvalue: 'Not Found'
+            -
+              value: '1'
+              newvalue: OK
+            -
+              value: '2'
+              newvalue: Fail
+        -
+          uuid: 6b15a86fc4b74a7ea41cc236d73a8a50
+          name: 'DellStorage Volume Status'
+          mappings:
+            -
+              value: '1'
+              newvalue: Up
+            -
+              value: '2'
+              newvalue: Down
+            -
+              value: '3'
+              newvalue: Degraded
+        -
+          uuid: 053f0a072ea548f6a1947d87cf4acaed
+          name: 'Global Status Dell'
+          mappings:
+            -
+              value: '1'
+              newvalue: Other
+            -
+              value: '2'
+              newvalue: Unknown
+            -
+              value: '3'
+              newvalue: Ok
+            -
+              value: '4'
+              newvalue: Noncritical
+            -
+              value: '5'
+              newvalue: Critical
+            -
+              value: '6'
+              newvalue: Nonrecoverable
+        -
+          uuid: bf276634222d449fb3b3f6bf06750a80
+          name: scItemStatus
+          mappings:
+            -
+              value: '1'
+              newvalue: Up
+            -
+              value: '2'
+              newvalue: Down
+            -
+              value: '3'
+              newvalue: Degraded
+        -
+          uuid: bf82e72018c04396bd3d7dedea1c4873
+          name: scServerCnctvy
+          mappings:
+            -
+              value: '1'
+              newvalue: Up
+            -
+              value: '2'
+              newvalue: Down
+            -
+              value: '3'
+              newvalue: Parial
